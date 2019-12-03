@@ -27,8 +27,8 @@ public class SplitVcf
 	public static void main(String[] args) throws Exception
 	{
 		rand = new Random(31);
-		String inputFile = "/home/mkirsche/eichler/merged.vcf";
-		String outDir = "eichler_split";
+		String inputFile = "/home/mkirsche/eichlersim/surv.vcf";
+		String outDir = "eichler_split_surv";
 		splitVcf(inputFile, outDir);
 	}
 	
@@ -43,6 +43,7 @@ public class SplitVcf
 			return;
 		}
 		
+		// Make output directory for the split VCF files
 		Path currentRelativePath = Paths.get("");
 		outDir = currentRelativePath.toAbsolutePath().toString() + "/" + outDir;
 		File f = new File(outDir);
@@ -57,6 +58,7 @@ public class SplitVcf
 			outs[i] = new PrintWriter(new File(fns[i]));
 		}
 		
+		// Write split VCF filenames to filelist.txt
 		PrintWriter out = new PrintWriter(new File(outDir + "/filelist.txt"));
 		for(int i = 0; i<n; i++)
 		{
@@ -83,7 +85,29 @@ public class SplitVcf
 			{
 				VcfEntry entry = new VcfEntry(line);
 				String suppVec = entry.getInfo("SUPP_VEC");
-				String[] ids = entry.getInfo("IDLIST").split(",");
+				String method = entry.getInfo("SVMETHOD");
+				int supp = Integer.parseInt(entry.getInfo("SUPP"));
+				
+				// Get the list of IDs - the way of doing that depends on the method used to merge them
+				String[] idList = new String[supp];
+				if(method.equals("JASMINE"))
+				{
+					idList = entry.getInfo("IDLIST").split(",");
+				}
+				else if(method.startsWith("SURVIVOR"))
+				{
+					ArrayList<String> ids = new ArrayList<String>();
+					for(int i = 9; i<entry.tabTokens.length; i++)
+					{
+						String val = entry.tabTokens[i].split(":")[7];
+						if(!val.equalsIgnoreCase("nan")) ids.add(val);
+					}
+					for(int i = 0; i<ids.size(); i++)
+					{
+						idList[i] = ids.get(i);
+					}
+				}
+				
 				int idIdx = 0;
 				for(int i = 0; i<n; i++)
 				{
@@ -92,7 +116,7 @@ public class SplitVcf
 					{
 						VcfEntry newEntry = new VcfEntry(entry.originalLine);
 						
-						newEntry.setId(ids[idIdx]);
+						newEntry.setId(idList[idIdx]);
 						
 						long oldStart = newEntry.getPos();
 						
@@ -116,6 +140,19 @@ public class SplitVcf
 						}
 						
 						String type = newEntry.getType();
+						int refLength = newEntry.getRef().length();
+						int altLength = newEntry.getAlt().length();
+						if(!newEntry.getAlt().contains("<") && !newEntry.getRef().contains("N"))
+						{
+							if(refLength > altLength)
+							{
+								type = "DEL";
+							}
+							if(refLength < altLength)
+							{
+								type = "INS";
+							}
+						}
 						
 						// Set END INFO field
 						if(newEntry.hasInfoField("END"))
@@ -135,6 +172,10 @@ public class SplitVcf
 						{
 							if(type.equals("INS"))
 							{
+								if(entry.getLength() < 0)
+								{
+									System.out.println(entry);
+								}
 								entry.setAlt(adjustStringLength(entry.getAlt(), newLen + 1));
 								if(entry.hasInfoField("SEQ"))
 								{

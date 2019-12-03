@@ -3,19 +3,38 @@
  */
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.TreeSet;
 
 public class MergeComparison {
+	
+	// Option to run in different comparison modes based on the desired similarity metric
+	static int COMPARISON_MODE = 0;
+	static String[] MODE_DESCRIPTIONS = new String[] {
+			"full merged variants",
+			"consecutive variants in merged sets",
+			"all pairs of merged variants"
+	};
 	public static void main(String[] args) throws Exception
 	{
-		String fn1 = "/home/mkirsche/eichler/merged.vcf";
-		String fn2 = "/home/mkirsche/eclipse-workspace/SVMergeEval/newmerged.vcf";
-		TreeSet<MergedVariant> first = getAllMerged(fn1), second = getAllMerged(fn2);
-		int[] counts = subsetCounts(first, second);
-		System.out.printf("First only: %d (%.2f%% of first callset)\n",counts[1], 100.0 * counts[1] / first.size());
-		System.out.printf("Second only: %d (%.2f%% of second callset)\n",counts[2], 100.0 * counts[2] / second.size());
-		System.out.printf("Both: %d (%.4f%% of larger callset)\n",counts[3], 100.0 * counts[3] / Math.max(first.size(), second.size()));
+		String fn1 = "/home/mkirsche/eichlersim/surv.vcf";
+		String fn2 = "/home/mkirsche/eichlersim/merged.vcf";
+		if(args.length == 2)
+		{
+			fn1 = args[0];
+			fn2 = args[1];
+		}
+		for(COMPARISON_MODE = 0; COMPARISON_MODE <= 2; COMPARISON_MODE++)
+		{
+			TreeSet<MergedVariant> first = getAllMerged(fn1), second = getAllMerged(fn2);
+			int[] counts = subsetCounts(first, second);
+			System.out.println("Comparing " + MODE_DESCRIPTIONS[COMPARISON_MODE]);
+			System.out.printf("First only: %d (%.2f%% of first callset)\n",counts[1], 100.0 * counts[1] / first.size());
+			System.out.printf("Second only: %d (%.2f%% of second callset)\n",counts[2], 100.0 * counts[2] / second.size());
+			System.out.printf("Both: %d (%.4f%% of larger callset)\n",counts[3], 100.0 * counts[3] / Math.max(first.size(), second.size()));
+			System.out.println();
+		}
 	}
 	
 	/*
@@ -65,7 +84,34 @@ public class MergeComparison {
 			{
 				continue;
 			}
-			res.add(new MergedVariant(line));
+			MergedVariant mv = new MergedVariant(line);
+			if(COMPARISON_MODE == 0)
+			{
+				res.add(mv);
+			}
+			else if(COMPARISON_MODE == 1)
+			{
+				int length = mv.ids.length;
+				for(int i = 0; i<length-1; i++)
+				{
+					int[] samples = new int[] {mv.samples[i], mv.samples[i+1]};
+					String[] ids = new String[] {mv.ids[i], mv.ids[i+1]};
+					res.add(new MergedVariant(ids, samples));
+				}
+			}
+			else if(COMPARISON_MODE == 2)
+			{
+				int length = mv.ids.length;
+				for(int i = 0; i<length-1; i++)
+				{
+					for(int j = i+1; j<length; j++)
+					{
+						int[] samples = new int[] {mv.samples[i], mv.samples[j]};
+						String[] ids = new String[] {mv.ids[i], mv.ids[j]};
+						res.add(new MergedVariant(ids, samples));
+					}
+				}
+			}
 		}
 		input.close();
 		return res;
@@ -79,14 +125,17 @@ public class MergeComparison {
 	{
 		String[] ids;
 		int[] samples;
+		MergedVariant(String[] ids, int[] samples)
+		{
+			this.ids = ids;
+			this.samples = samples;
+		}
 		MergedVariant(String line) throws Exception
 		{
 			VcfEntry entry = new VcfEntry(line);
 			
 			// Check SUPP field for number of samples involved
 			int supp = Integer.parseInt(entry.getInfo("SUPP"));
-			ids = new String[supp];
-			samples = new int[supp];
 			
 			// Get the indices of the samples from SUPP_VEC
 			String suppVec = entry.getInfo("SUPP_VEC");
@@ -101,14 +150,38 @@ public class MergeComparison {
 			}
 			
 			// Get the variant IDs
-			String[] idlist = entry.getInfo("IDLIST").split(",");
+			String method = entry.getInfo("SVMETHOD");
+			String[] idList = new String[supp];
+			if(method.equals("JASMINE"))
+			{
+				idList = entry.getInfo("IDLIST").split(",");
+			}
+			else if(method.startsWith("SURVIVOR"))
+			{
+				ArrayList<String> ids = new ArrayList<String>();
+				for(int i = 9; i<entry.tabTokens.length; i++)
+				{
+					String val = entry.tabTokens[i].split(":")[7];
+					if(!val.equalsIgnoreCase("nan"))
+					{
+						ids.add(val);
+					}
+				}
+				for(int i = 0; i<ids.size(); i++)
+				{
+					idList[i] = ids.get(i);
+				}
+			}
 			
 			// Initialize all values
+			ids = new String[supp];
+			samples = new int[supp];
 			for(int i = 0; i<supp; i++)
 			{
-				ids[i] = idlist[i];
+				ids[i] = idList[i];
 				samples[i] = sampleIndices[i];
 			}
+			
 		}
 		
 		// Order by increasing value of (sample, id) pairs
