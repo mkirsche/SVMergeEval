@@ -1,0 +1,7 @@
+*.vcf
+output/
+eichler_split/*
+bin/*
+.classpath
+.project
+.settings/
