@@ -10,7 +10,6 @@ import java.util.TreeSet;
 public class MergeComparison {
 	
 	// Option to run in different comparison modes based on the desired similarity metric
-	static int COMPARISON_MODE = 0;
 	static String[] MODE_DESCRIPTIONS = new String[] {
 			"full merged variants",
 			"consecutive variants in merged sets",
@@ -25,11 +24,16 @@ public class MergeComparison {
 			fn1 = args[0];
 			fn2 = args[1];
 		}
-		for(COMPARISON_MODE = 0; COMPARISON_MODE <= 2; COMPARISON_MODE++)
+		compareMergedSets(fn1, fn2, false);
+	}
+	
+	public static void compareMergedSets(String fn1, String fn2, boolean fn2Reversed) throws Exception
+	{
+		for(int comparisonMode = 0; comparisonMode <= 2; comparisonMode++)
 		{
-			TreeSet<MergedVariant> first = getAllMerged(fn1), second = getAllMerged(fn2);
+			TreeSet<MergedVariant> first = getAllMerged(fn1, comparisonMode, false), second = getAllMerged(fn2, comparisonMode, fn2Reversed);
 			int[] counts = subsetCounts(first, second);
-			System.out.println("Comparing " + MODE_DESCRIPTIONS[COMPARISON_MODE]);
+			System.out.println("Comparing " + MODE_DESCRIPTIONS[comparisonMode]);
 			System.out.printf("First only: %d (%.2f%% of first callset)\n",counts[1], 100.0 * counts[1] / first.size());
 			System.out.printf("Second only: %d (%.2f%% of second callset)\n",counts[2], 100.0 * counts[2] / second.size());
 			System.out.printf("Both: %d (%.4f%% of larger callset)\n",counts[3], 100.0 * counts[3] / Math.max(first.size(), second.size()));
@@ -73,7 +77,7 @@ public class MergeComparison {
 	/*
 	 * Get a set of all merged variants from a VCF file
 	 */
-	static TreeSet<MergedVariant> getAllMerged(String fn) throws Exception
+	static TreeSet<MergedVariant> getAllMerged(String fn, int comparisonMode, boolean reversed) throws Exception
 	{
 		TreeSet<MergedVariant> res = new TreeSet<MergedVariant>();
 		Scanner input = new Scanner(new FileInputStream(new File(fn)));
@@ -84,12 +88,12 @@ public class MergeComparison {
 			{
 				continue;
 			}
-			MergedVariant mv = new MergedVariant(line);
-			if(COMPARISON_MODE == 0)
+			MergedVariant mv = new MergedVariant(line, reversed);
+			if(comparisonMode == 0)
 			{
 				res.add(mv);
 			}
-			else if(COMPARISON_MODE == 1)
+			else if(comparisonMode == 1)
 			{
 				int length = mv.ids.length;
 				for(int i = 0; i<length-1; i++)
@@ -99,7 +103,7 @@ public class MergeComparison {
 					res.add(new MergedVariant(ids, samples));
 				}
 			}
-			else if(COMPARISON_MODE == 2)
+			else if(comparisonMode == 2)
 			{
 				int length = mv.ids.length;
 				for(int i = 0; i<length-1; i++)
@@ -130,7 +134,7 @@ public class MergeComparison {
 			this.ids = ids;
 			this.samples = samples;
 		}
-		MergedVariant(String line) throws Exception
+		MergedVariant(String line, boolean reversed) throws Exception
 		{
 			VcfEntry entry = new VcfEntry(line);
 			
@@ -145,7 +149,7 @@ public class MergeComparison {
 			{
 				if(suppVec.charAt(i) == '1')
 				{
-					sampleIndices[idx++] = i;
+					sampleIndices[idx++] = reversed ? (suppVec.length() - i - 1) : i;
 				}
 			}
 			
@@ -181,7 +185,21 @@ public class MergeComparison {
 				ids[i] = idList[i];
 				samples[i] = sampleIndices[i];
 			}
-			
+			for(int i = 0; i<ids.length; i++)
+			{
+				for(int j = 0; j<ids.length-1; j++)
+				{
+					if(samples[j] > samples[j+1])
+					{
+						int tmp = samples[j];
+						samples[j] = samples[j+1];
+						samples[j+1] = tmp;
+						String tmpId = ids[j];
+						ids[j] = ids[j+1];
+						ids[j+1] = tmpId;
+					}
+				}
+			}
 		}
 		
 		// Order by increasing value of (sample, id) pairs
