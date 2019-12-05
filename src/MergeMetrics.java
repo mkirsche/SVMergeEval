@@ -29,7 +29,7 @@ public static void main(String[] args) throws Exception
 			continue;
 		}
 		VcfEntry entry = new VcfEntry(line);
-		merges.add(new MergeComparison.MergedVariant(line));
+		merges.add(new MergeComparison.MergedVariant(line, new int[] {}));
 		if(entry.getInfo("SVMETHOD").startsWith("SURVIVOR"))
 		{
 			for(int i = 9; i<entry.tabTokens.length; i++)
