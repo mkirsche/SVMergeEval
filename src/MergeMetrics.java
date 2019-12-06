@@ -4,17 +4,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class MergeMetrics {
 public static void main(String[] args) throws Exception
 {
-	String mergedVcf = "/home/mkirsche/eichlersim/surv.vcf";
+	String mergedVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
 	String filelist = "/home/mkirsche/eichler/filelist.txt";
 	
 	System.err.println("Reading merged VCF");
 	
 	int intraSampleMerges = 0;
+	int varsWithIntraMerges = 0;
+	int mergedVars = 0;
 	Scanner input = new Scanner(new FileInputStream(new File(mergedVcf)));
 	TreeSet<MergeComparison.MergedVariant> merges = new TreeSet<MergeComparison.MergedVariant>();
 	while(input.hasNext())
@@ -30,12 +33,22 @@ public static void main(String[] args) throws Exception
 		}
 		VcfEntry entry = new VcfEntry(line);
 		merges.add(new MergeComparison.MergedVariant(line, new int[] {}));
+		mergedVars++;
 		if(entry.getInfo("SVMETHOD").startsWith("SURVIVOR"))
 		{
+			boolean hasIntra = false;
 			for(int i = 9; i<entry.tabTokens.length; i++)
 			{
 				String[] cur = entry.tabTokens[i].split(":");
 				intraSampleMerges += cur[cur.length-1].split(",").length - 1;
+				if(cur[cur.length-1].split(",").length > 1)
+				{
+					hasIntra = true;
+				}
+			}
+			if(hasIntra)
+			{
+				varsWithIntraMerges++;
 			}
 		}
 	}
@@ -79,6 +92,8 @@ public static void main(String[] args) throws Exception
 	System.err.println("Processing merged variants");
 	int extremeMerges = 0;
 	
+	Histogram spans = new Histogram(100);
+	
 	// Now we are iterating over all merged variants and can look at the entries that make them up
 	for(MergeComparison.MergedVariant merge : merges)
 	{
@@ -105,6 +120,7 @@ public static void main(String[] args) throws Exception
 			minStart = Math.min(minStart,  entry.getPos());
 			maxStart = Math.max(maxStart, entry.getPos());
 		}
+		spans.addVal((int)(maxStart - minStart));
 		if(maxStart - minStart > 3000)
 		{
 			extremeMerges++;
@@ -112,9 +128,14 @@ public static void main(String[] args) throws Exception
 	}
 	
 	System.out.println();
+	System.out.println("Component spans:");
+	System.out.println(spans);
+	System.out.println();
 	System.out.println("Intersample merges: " + interSampleMerges);
 	System.out.println("Intrasample merges: " + intraSampleMerges);
-	System.out.println("Merges spanning >3k bases: " + extremeMerges);
+	System.out.println("Merged variants: " + mergedVars);
+	System.out.println("Merged variants with intrasample merging: " + varsWithIntraMerges);
+	System.out.println("Merged variants spanning >3k bases: " + extremeMerges);
 	System.out.println("Component size histogram: " + Arrays.toString(suppFreq));
 	System.out.println();
 	System.out.println("Merges per sample pair (table[i][j] is percentage of SVs in sample j which get merged with something in sample i)");
@@ -125,6 +146,63 @@ public static void main(String[] args) throws Exception
 			System.out.printf("%05.2f%% ", pairwiseMergingCounts[i][j] * 100.0 / idToEntry.get(j).size());
 		}
 		System.out.println();
+	}
+}
+
+/*
+ * Histogram for counting values in binss
+ */
+static class Histogram
+{
+	int binSize;
+	TreeMap<Pair, Integer> binCounts;
+	Histogram(int binSize)
+	{
+		this.binSize = binSize;
+		binCounts = new TreeMap<Pair, Integer>();
+	}
+	void addVal(int val)
+	{
+		Pair bin = getBin(val);
+		if(binCounts.containsKey(bin))
+		{
+			binCounts.put(bin, binCounts.get(bin) + 1);
+		}
+		else
+		{
+			binCounts.put(bin, 1);
+		}
+	}
+	Pair getBin(int val)
+	{
+		int min = val / binSize * binSize;
+		int max = min + binSize - 1;
+		return new Pair(min, max);
+	}
+	public String toString()
+	{
+		String res = "";
+		for(Pair p : binCounts.keySet())
+		{
+			res += p.a + "-" + p.b + ": " + binCounts.get(p) + "\n";
+		}
+		return res;
+	}
+	static class Pair implements Comparable<Pair>
+	{
+		int a, b;
+		Pair(int aa, int bb)
+		{
+			a = aa; b = bb;
+		}
+		public int compareTo(Pair o)
+		{
+			if(a != o.a)
+			{
+				return a - o.a;
+			}
+			return b - o.b;
+		}
 	}
 }
 }
