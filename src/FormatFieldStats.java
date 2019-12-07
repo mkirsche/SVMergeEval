@@ -16,6 +16,7 @@ public class FormatFieldStats
 		//String mergedGtVcf = "/home/mkirsche/eichler/survmerged.vcf";
 		String mergedGtVcf = "/home/mkirsche/eichler/mergedgt.vcf";
 		int oneType = 0, multipleTypes = 0;
+		int oneGt = 0, multipleGt = 0;
 		Scanner input = new Scanner(new FileInputStream(new File(mergedGtVcf)));
 		TreeMap<String, Integer> multiTypeSets = new TreeMap<String, Integer>();
 		while(input.hasNext())
@@ -27,29 +28,41 @@ public class FormatFieldStats
 			}
 			VcfEntry entry = new VcfEntry(line);
 			TreeSet<String> types = new TreeSet<String>();
+			TreeSet<String> gts = new TreeSet<String>();
 			String[] tokens = line.split("\t");
 			for(int i = 9; i<tokens.length; i++)
 			{
 				if(entry.getInfo("SVMETHOD").equals("JASMINE"))
 				{
-					String type = tokens[i].split(":")[2];
-					if(type.equals("NA") || type.equals("."))
+					String[] formatTokens = tokens[i].split(":");
+					String type = formatTokens[2];
+					if(!type.equals("NA") && !type.equals("."))
 					{
-						continue;
+						types.add(type);
 					}
-					types.add(type);
+					
+					String gt = formatTokens[0];
+					if(!gt.equals("./."))
+					{
+						gts.add(gt);
+					}
 				}
 				else if(entry.getInfo("SVMETHOD").startsWith("SURVIVOR"))
 				{
-					String type = tokens[i].split(":")[6];
-					if(type.equalsIgnoreCase("NAN") || type.equals("."))
+					String[] formatTokens = tokens[i].split(":");
+					String type = formatTokens[6];
+					if(!type.equalsIgnoreCase("NAN") && !type.equals("."))
 					{
-						continue;
+						String[] subTypes = type.split(",");
+						for(String subType : subTypes)
+						{
+							types.add(subType);
+						}
 					}
-					String[] subTypes = type.split(",");
-					for(String subType : subTypes)
+					String gt = formatTokens[0];
+					if(!gt.equals("./."))
 					{
-						types.add(subType);
+						gts.add(gt);
 					}
 				}
 			}
@@ -63,8 +76,18 @@ public class FormatFieldStats
 				int newCount = multiTypeSets.containsKey(types.toString()) ? (1 + multiTypeSets.get(types.toString())) : 1;
 				multiTypeSets.put(types.toString(), newCount);
 			}
+			if(gts.size() == 1)
+			{
+				oneGt++;
+			}
+			else if(gts.size() > 1)
+			{
+				multipleGt++;
+			}
 		}
 		
+		System.out.println("Merged variants of all one genotype: " + oneGt);
+		System.out.println("Merged variants with multiple genotypes: " + multipleGt);
 		System.out.println("Merged variants of all one type: " + oneType);
 		System.out.println("Merged variants with multiple types: " + multipleTypes);
 		for(String s : multiTypeSets.keySet())
