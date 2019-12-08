@@ -17,6 +17,7 @@ public class FormatFieldStats
 		String mergedGtVcf = "/home/mkirsche/eichler/mergedgt.vcf";
 		int oneType = 0, multipleTypes = 0;
 		int oneGt = 0, multipleGt = 0;
+		int uniqueSpecific = 0, uniqueSensitive = 0;
 		Scanner input = new Scanner(new FileInputStream(new File(mergedGtVcf)));
 		TreeMap<String, Integer> multiTypeSets = new TreeMap<String, Integer>();
 		while(input.hasNext())
@@ -30,6 +31,23 @@ public class FormatFieldStats
 			TreeSet<String> types = new TreeSet<String>();
 			TreeSet<String> gts = new TreeSet<String>();
 			String[] tokens = line.split("\t");
+			
+			String suppVec = entry.getInfo("SUPP_VEC");
+			int numSamples = countOnes(suppVec);
+			int firstOneIndex = suppVec.indexOf('1');
+			
+			if(numSamples == 1)
+			{
+				char specificCharacter = tokens[firstOneIndex + 9].split(":")[1].charAt(0);
+				if(specificCharacter == '0')
+				{
+					uniqueSensitive++;
+				}
+				else
+				{
+					uniqueSpecific++;
+				}
+			}
 			for(int i = 9; i<tokens.length; i++)
 			{
 				if(entry.getInfo("SVMETHOD").equals("JASMINE"))
@@ -86,6 +104,8 @@ public class FormatFieldStats
 			}
 		}
 		
+		System.out.println("Sample-unique specific calls: " + uniqueSpecific);
+		System.out.println("Sample-unique sensitive calls: " + uniqueSensitive);
 		System.out.println("Merged variants of all one genotype: " + oneGt);
 		System.out.println("Merged variants with multiple genotypes: " + multipleGt);
 		System.out.println("Merged variants of all one type: " + oneType);
@@ -96,5 +116,21 @@ public class FormatFieldStats
 		}
 		
 		input.close();
+	}
+	
+	/*
+	 * The number of times the character '1' occurs in a string
+	 */
+	static int countOnes(String s)
+	{
+		int res = 0;
+		for(int i = 0; i<s.length(); i++)
+		{
+			if(s.charAt(i) == '1')
+			{
+				res++;
+			}
+		}
+		return res;
 	}
 }
