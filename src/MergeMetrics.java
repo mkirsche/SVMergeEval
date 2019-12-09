@@ -13,6 +13,16 @@ public static void main(String[] args) throws Exception
 	String mergedVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
 	String filelist = "/home/mkirsche/eichler/filelist.txt";
 	
+	if(args.length == 2)
+	{
+		mergedVcf = args[0];
+		filelist = args[1];
+	}
+	else
+	{
+		System.out.println("Usage: java MergeMetrics <mergedVcf> <fileList>");
+	}
+	
 	System.err.println("Reading merged VCF");
 	
 	int intraSampleMerges = 0;

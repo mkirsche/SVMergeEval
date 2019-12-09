@@ -24,6 +24,10 @@ public class MergeComparison {
 			fn1 = args[0];
 			fn2 = args[1];
 		}
+		else
+		{
+			System.out.println("Usage: java MergeComparison <mergedfile1> <mergedfile2>");
+		}
 		compareMergedSets(fn1, fn2, new int[] {});
 	}
 	

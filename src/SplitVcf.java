@@ -29,6 +29,15 @@ public class SplitVcf
 		rand = new Random(31);
 		String inputFile = "/home/mkirsche/eichlersim/surv.vcf";
 		String outDir = "eichler_split_surv";
+		if(args.length == 2)
+		{
+			inputFile = args[0];
+			outDir = args[1];
+		}
+		else
+		{
+			System.out.println("Usage: java SplitVcf <mergedVcf> <outputDirectory>");
+		}
 		splitVcf(inputFile, outDir);
 	}
 	

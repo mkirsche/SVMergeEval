@@ -19,58 +19,70 @@ public class ReverseComparison {
 	static boolean overwrite = false;
 public static void main(String[] args) throws Exception
 {
-	if(merger.equals("JASMINE"))
+	String fileList = "", revFileList = "", forwardVcf = "", reverseVcf = "";
+	if(args.length == 4)
 	{
-		if(revMode.equals("FILELIST"))
-		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/jasmine_revfilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/jasmine_revmerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
-		}
-		else if(revMode.equals("VCF"))
-		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/jasmine_eachrevfilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/jasmine_eachrevmerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
-		}
-		else if(revMode.equals("SHUFFLE"))
-		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/jasmine_shufflefilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/jasmine_shufflemerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
-		}
+		fileList = args[0];
+		revFileList = args[1];
+		forwardVcf = args[2];
+		reverseVcf = args[3];
 	}
-	else if(merger.equals("SURVIVOR"))
+	else
 	{
-		if(revMode.equals("FILELIST"))
+		System.out.println("Usage: java ReverseComparison <filelist> <revfilelist> <forwardvcf> <reversevcf>");
+		if(merger.equals("JASMINE"))
 		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/survivor_revfilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/survivor_revmerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			if(revMode.equals("FILELIST"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/jasmine_revfilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/jasmine_revmerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
+			else if(revMode.equals("VCF"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/jasmine_eachrevfilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/jasmine_eachrevmerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
+			else if(revMode.equals("SHUFFLE"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/jasmine_shufflefilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/jasmine_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/jasmine_shufflemerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
 		}
-		else if(revMode.equals("VCF"))
+		else if(merger.equals("SURVIVOR"))
 		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/survivor_eachrevfilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/survivor_eachrevmerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
-		}
-		else if(revMode.equals("SHUFFLE"))
-		{
-			String fileList = "/home/mkirsche/eichler/filelist.txt";
-			String revFileList = "/home/mkirsche/eichler/survivor_shufflefilelist.txt";
-			String forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
-			String reverseVcf = "/home/mkirsche/eichler/survivor_shufflemerged.vcf";
-			compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			if(revMode.equals("FILELIST"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/survivor_revfilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/survivor_revmerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
+			else if(revMode.equals("VCF"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/survivor_eachrevfilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/survivor_eachrevmerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
+			else if(revMode.equals("SHUFFLE"))
+			{
+				fileList = "/home/mkirsche/eichler/filelist.txt";
+				revFileList = "/home/mkirsche/eichler/survivor_shufflefilelist.txt";
+				forwardVcf = "/home/mkirsche/eichler/survivor_merged.vcf";
+				reverseVcf = "/home/mkirsche/eichler/survivor_shufflemerged.vcf";
+				compareReverseFilelist(fileList, revFileList, forwardVcf, reverseVcf);
+			}
 		}
 	}
 }

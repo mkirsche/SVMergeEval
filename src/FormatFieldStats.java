@@ -15,6 +15,15 @@ public class FormatFieldStats
 	{
 		//String mergedGtVcf = "/home/mkirsche/eichler/survmerged.vcf";
 		String mergedGtVcf = "/home/mkirsche/eichler/mergedgt.vcf";
+		
+		if(args.length == 1)
+		{
+			mergedGtVcf = args[0];
+		}
+		else
+		{
+			System.out.println("Usage: java FormatFieldStats <mergedVcfWithGenotypes>");
+		}
 		int oneType = 0, multipleTypes = 0;
 		int oneGt = 0, multipleGt = 0;
 		int uniqueSpecific = 0, uniqueSensitive = 0;
