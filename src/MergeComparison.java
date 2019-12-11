@@ -145,10 +145,26 @@ public class MergeComparison {
 			VcfEntry entry = new VcfEntry(line);
 			
 			// Check SUPP field for number of samples involved
-			int supp = Integer.parseInt(entry.getInfo("SUPP"));
+			int supp = 0;
+			if(useExtIdList)
+			{
+				supp = Integer.parseInt(entry.getInfo("SUPP_EXT"));
+			}
+			else
+			{
+				supp = Integer.parseInt(entry.getInfo("SUPP"));
+			}
 			
 			// Get the indices of the samples from SUPP_VEC
-			String suppVec = entry.getInfo("SUPP_VEC");
+			String suppVec = "";
+			if(useExtIdList)
+			{
+				suppVec = entry.getInfo("SUPP_VEC_EXT");
+			}
+			else
+			{
+				suppVec = entry.getInfo("SUPP_VEC");
+			}
 			int[] sampleIndices = new int[supp];
 			int idx = 0;
 			for(int i = 0; i<suppVec.length(); i++)

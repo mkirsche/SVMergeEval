@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class CascadeTest
 {
 	
-	static boolean RERUN_MERGING = true;
+	static boolean RERUN_MERGING = false;
 	
 	public static void main(String[] args) throws Exception
 	{
