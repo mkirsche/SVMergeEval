@@ -5,3 +5,6 @@ bin/*
 .classpath
 .project
 .settings/
+*.class
+merged/
+eichler*/

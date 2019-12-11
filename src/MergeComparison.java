@@ -9,6 +9,8 @@ import java.util.TreeSet;
 
 public class MergeComparison {
 	
+	static boolean[] USE_EXT_IDLISTS = new boolean[] {false, false};
+	
 	// Option to run in different comparison modes based on the desired similarity metric
 	static String[] MODE_DESCRIPTIONS = new String[] {
 			"full merged variants",
@@ -35,7 +37,7 @@ public class MergeComparison {
 	{
 		for(int comparisonMode = 0; comparisonMode <= 2; comparisonMode++)
 		{
-			TreeSet<MergedVariant> first = getAllMerged(fn1, comparisonMode, new int[] {}), second = getAllMerged(fn2, comparisonMode, order);
+			TreeSet<MergedVariant> first = getAllMerged(fn1, comparisonMode, new int[] {}, 0), second = getAllMerged(fn2, comparisonMode, order, 1);
 			int[] counts = subsetCounts(first, second);
 			System.out.println("Comparing " + MODE_DESCRIPTIONS[comparisonMode]);
 			System.out.printf("First only: %d (%.2f%% of first callset)\n",counts[1], 100.0 * counts[1] / first.size());
@@ -81,7 +83,7 @@ public class MergeComparison {
 	/*
 	 * Get a set of all merged variants from a VCF file
 	 */
-	static TreeSet<MergedVariant> getAllMerged(String fn, int comparisonMode, int[] order) throws Exception
+	static TreeSet<MergedVariant> getAllMerged(String fn, int comparisonMode, int[] order, int sampleNum) throws Exception
 	{
 		TreeSet<MergedVariant> res = new TreeSet<MergedVariant>();
 		Scanner input = new Scanner(new FileInputStream(new File(fn)));
@@ -92,7 +94,7 @@ public class MergeComparison {
 			{
 				continue;
 			}
-			MergedVariant mv = new MergedVariant(line, order);
+			MergedVariant mv = new MergedVariant(line, order, USE_EXT_IDLISTS[sampleNum]);
 			if(comparisonMode == 0)
 			{
 				res.add(mv);
@@ -138,7 +140,7 @@ public class MergeComparison {
 			this.ids = ids;
 			this.samples = samples;
 		}
-		MergedVariant(String line, int[] order) throws Exception
+		MergedVariant(String line, int[] order, boolean useExtIdList) throws Exception
 		{
 			VcfEntry entry = new VcfEntry(line);
 			
@@ -169,7 +171,14 @@ public class MergeComparison {
 			String[] idList = new String[supp];
 			if(method.equals("JASMINE"))
 			{
-				idList = entry.getInfo("IDLIST").split(",");
+				if(useExtIdList)
+				{
+					idList = entry.getInfo("IDLIST_EXT").split(",");
+				}
+				else
+				{
+					idList = entry.getInfo("IDLIST").split(",");
+				}
 			}
 			else if(method.startsWith("SURVIVOR"))
 			{

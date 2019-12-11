@@ -42,7 +42,7 @@ public static void main(String[] args) throws Exception
 			continue;
 		}
 		VcfEntry entry = new VcfEntry(line);
-		merges.add(new MergeComparison.MergedVariant(line, new int[] {}));
+		merges.add(new MergeComparison.MergedVariant(line, new int[] {}, false));
 		mergedVars++;
 		if(entry.getInfo("SVMETHOD").startsWith("SURVIVOR"))
 		{
